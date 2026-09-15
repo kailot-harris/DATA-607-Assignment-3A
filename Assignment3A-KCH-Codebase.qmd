@@ -1,0 +1,152 @@
+---
+title: "Assignment3A-KCH-Approach"
+author: "Kailot C. Harris"
+date: "2026/09/15"
+format: html
+theme: cosmo
+editor: visual
+---
+
+# Introduction and Overview
+
+This assignment serves as an extension of Assignment 2A. Here, the pre-existing data pipeline for survey response ingestion into a database is already in place. The important objective for this assignment is determining a global baseline estimate for movies with missing ratings. Some important steps along the way include importing the data from a PostgreSQL database, tidying the data, and calculating necessary parameters.
+
+Anticipated challenges in this assingment include developing concise R implementations to perform calculations, vector manipulation and finding missing ratings in the database to as placeholders to generate predictions.
+
+# Codebase
+
+## Database Connection
+
+```{r connect-db}
+#| echo: true
+#| message: false
+#| warning: false
+
+library(RPostgres)
+
+#establish connection
+con <- dbConnect(RPostgres::Postgres(),
+                 dbname = 'Second_DB_DATA607', 
+                 host = 'localhost',
+                 port = 5432,
+                 user = Sys.getenv("DATA_607_DB_USER"),
+                 password = Sys.getenv("DATA_607_DB_PW"))
+```
+
+## Data Import and Database Disconnection
+
+```{r import-data-from-db}
+#| echo: TRUE
+#| warning: FALSE
+#| message: FALSE
+
+
+library(tidyverse)
+
+df_movies <- dbGetQuery(con, "select * from movies;")
+
+df_respondents <- dbGetQuery(con, "select * from respondents;")
+
+df_ratings <- dbGetQuery(con, "select * from ratings;")
+
+##closing the DB conneciton after importing data
+dbDisconnect(con)
+## Confirming df_Ratings is of expected dimensions 
+glimpse(df_ratings)
+```
+
+## Data Tidying
+
+```{r join-tables}
+
+df <- left_join(df_ratings, 
+                df_movies, 
+                by = "movie_id")
+
+df <- left_join(df, 
+                df_respondents, 
+                by = "respondent_id")
+
+head(df)
+```
+
+## Missing Data
+
+```{r missing-data}
+
+respondent_movie_combinations <- expand.grid(
+  respondent_id = df_respondents$respondent_id,
+  movie_id = df_movies$movie_id
+)  
+
+df_2 <- respondent_movie_combinations |>
+  left_join(df_ratings, 
+            by = c("respondent_id",
+                   "movie_id")) |>
+  left_join(df_movies, 
+            by="movie_id")
+
+#NA values visible in rating id and rating column
+head(df_2)
+
+```
+
+## Global Mean Determination
+
+```{r global-mean-calcs}
+
+mu <- df |>
+  group_by(movie_id) |>
+  summarize (mean_rating_movie = mean(rating, na.rm=TRUE)) |>
+  summarize (global_mean = mean(mean_rating_movie))
+
+mu[1,1]
+```
+
+```{r user-contributions}
+b_user <- df |>
+  group_by(respondent_id) |>
+  summarize (mean_rating_respondent = mean(rating, na.RM=TRUE)) |>
+  mutate(b_user = mean_rating_respondent - as.numeric(mu[1,1]))
+
+b_user <- b_user |>
+  select(respondent_id, b_user)
+
+b_user
+```
+
+```{r movie-contributions}
+b_movie <- df |>
+  group_by(movie_id) |>
+  summarize(b_movie = mean(rating, na.RM = TRUE)-as.numeric(mu[1,1]))
+
+b_movie
+```
+
+## Estimating Movie Rating for Users
+
+### Finding missing ratings
+
+```{r}
+df_missing <- df_2 |>
+  filter(is.na(rating))
+
+head(df_missing)
+```
+
+It seems that respondents 4, 6, and 7 haven't seen "One Battle After Another (2025)" yet. Global baseline estimates will be generated for all mock respondents for any movie they left unrated.
+
+```{r estimate-generation}
+
+mu <- as.numeric(mu[1,1])
+  
+df_estimates <- df_missing |>
+  left_join(b_user, by = "respondent_id") |>
+  left_join(b_movie, by = "movie_id") |>
+  mutate(global_mean = mu,
+         rating_est = global_mean+b_user+b_movie)
+
+df_estimates |> select(respondent_id, movie_id, title, rating_est)
+
+df_estimates
+```
