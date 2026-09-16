@@ -1,0 +1,5 @@
+Links-Codebase-3A.txt
+
+https://github.com/kailot-harris/DATA-607-Assignment-3A/blob/main/Assignment3A-KCH-Approach.qmd
+
+https://github.com/kailot-harris/DATA-607-Assignment-3A/blob/main/Assignment3A-KCH-Approach.html

@@ -9,13 +9,15 @@ editor: visual
 
 # Introduction and Overview
 
-This assignment serves as an extension of Assignment 2A. Here, the pre-existing data pipeline for survey response ingestion into a database is already in place. The important objective for this assignment is determining a global baseline estimate for movies with missing ratings. Some important steps along the way include importing the data from a PostgreSQL database, tidying the data, and calculating necessary parameters.
+This assignment serves as an extension of Assignment 2A. Here, the pre-existing data pipeline for survey response ingestion into a database is already in place. The important objective for this assignment is determining a global baseline estimate for movies with missing ratings. Some important steps along the way include importing the data from a PostgreSQL database, tidying data, and calculating necessary parameters.
 
-Anticipated challenges in this assingment include developing concise R implementations to perform calculations, vector manipulation and finding missing ratings in the database to as placeholders to generate predictions.
+Anticipated challenges in this assignment include developing concise R implementations to perform calculations, vector manipulation and finding missing ratings in the database to as placeholders to generate predictions.
 
-# Codebase
+# Code Base
 
 ## Database Connection
+
+The PostgreSQL database from assignment 2A was connected to the R document using the RPostgres package. Login credentials were stored securely as environment variables.
 
 ```{r connect-db}
 #| echo: true
@@ -34,6 +36,8 @@ con <- dbConnect(RPostgres::Postgres(),
 ```
 
 ## Data Import and Database Disconnection
+
+Following the pipeline established in Assignment 2A, three data frames are constructed from SQL queries to the database. All records from each of the three tables in the database is input into R data frames with similar names.
 
 ```{r import-data-from-db}
 #| echo: TRUE
@@ -57,6 +61,8 @@ glimpse(df_ratings)
 
 ## Data Tidying
 
+To prepare the data for downstream analysis, a single data frame is constructed using left join operations on the three data frames. First the movies frame is joined to the rating frame by a common key: `movie_id`. Then the respondents frame is joined to the new frame by a common key: `respondent_id`.
+
 ```{r join-tables}
 
 df <- left_join(df_ratings, 
@@ -71,6 +77,8 @@ head(df)
 ```
 
 ## Missing Data
+
+The magnitude of missing data (i.e. movies without ratings from specific respondents) was calculated. An empty data frame is constructed with all possible combinations of `respondent_id` and `movie_id`, while `ratings` is left empty. The ratings column is populated by a similar join pattern to above: the ratings frame is joined into the empty frame by unique combinations of `repondent_id` and `movie_id`. From there, the movie titles are input by joining the movies frame to the new frame by the `movie_id` key. A head on the partially-filled data frame demonstrates missing values for `movie_id = 1`.
 
 ```{r missing-data}
 
@@ -93,6 +101,8 @@ head(df_2)
 
 ## Global Mean Determination
 
+A first step in generating predicted rating values for missing ratings was establishing the global mean for the dataset `mu`. `mu` was calculated via a series of piped summarize commands, with missing values removed before computing mean values. The global mean rating was determined to be approximately 3.76.
+
 ```{r global-mean-calcs}
 
 mu <- df |>
@@ -103,17 +113,19 @@ mu <- df |>
 mu[1,1]
 ```
 
+From there, user biases were investigated. Here, a series of piped summarize, mutate, and select commands creates the final data frame containing just the `respondent_id` and the "user bias value" or `b_user`.
+
 ```{r user-contributions}
 b_user <- df |>
   group_by(respondent_id) |>
   summarize (mean_rating_respondent = mean(rating, na.RM=TRUE)) |>
-  mutate(b_user = mean_rating_respondent - as.numeric(mu[1,1]))
-
-b_user <- b_user |>
+  mutate(b_user = mean_rating_respondent - as.numeric(mu[1,1])) |>
   select(respondent_id, b_user)
 
 b_user
 ```
+
+A similar calculation is performed to find the movie bias, or in other words, the extent to which certain movies are preferred in this data set. The average rating for each movie is calculated, and then the global mean is subtracted from that quantity to yield a bias value for each movie, `b_movie`.
 
 ```{r movie-contributions}
 b_movie <- df |>
@@ -126,6 +138,8 @@ b_movie
 ## Estimating Movie Rating for Users
 
 ### Finding missing ratings
+
+In order to determine which movies were missing ratings, the `NA` values were filtered into a new data frame, `df_missing`. Inspecting the first few rows of this frame confirms the presence of `NA` values in the `rating` and `rating_id` columns.
 
 ```{r}
 df_missing <- df_2 |>
