@@ -105,8 +105,7 @@ A first step in generating predicted rating values for missing ratings was estab
 
 ```{r global-mean-calcs}
 mu <- df |>
-  summarize(mean_rating = mean(rating, na.rm=TRUE)) |>
-  summarize(global_mean = mean(mean_rating))
+  summarize(global_mean = mean(rating, na.rm=TRUE))
 
 mu
 
