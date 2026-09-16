@@ -104,13 +104,12 @@ head(df_2)
 A first step in generating predicted rating values for missing ratings was establishing the global mean for the dataset `mu`. `mu` was calculated via a series of piped summarize commands, with missing values removed before computing mean values. The global mean rating was determined to be approximately 3.76.
 
 ```{r global-mean-calcs}
-
 mu <- df |>
-  group_by(movie_id) |>
-  summarize (mean_rating_movie = mean(rating, na.rm=TRUE)) |>
-  summarize (global_mean = mean(mean_rating_movie))
+  summarize(mean_rating = mean(rating, na.rm=TRUE)) |>
+  summarize(global_mean = mean(mean_rating))
 
-mu[1,1]
+mu
+
 ```
 
 From there, user biases were investigated. Here, a series of piped summarize, mutate, and select commands creates the final data frame containing just the `respondent_id` and the "user bias value" or `b_user`.
@@ -118,7 +117,7 @@ From there, user biases were investigated. Here, a series of piped summarize, mu
 ```{r user-contributions}
 b_user <- df |>
   group_by(respondent_id) |>
-  summarize (mean_rating_respondent = mean(rating, na.RM=TRUE)) |>
+  summarize (mean_rating_respondent = mean(rating, na.rm=TRUE)) |>
   mutate(b_user = mean_rating_respondent - as.numeric(mu[1,1])) |>
   select(respondent_id, b_user)
 
@@ -130,7 +129,7 @@ A similar calculation is performed to find the movie bias, or in other words, th
 ```{r movie-contributions}
 b_movie <- df |>
   group_by(movie_id) |>
-  summarize(b_movie = mean(rating, na.RM = TRUE)-as.numeric(mu[1,1]))
+  summarize(b_movie = mean(rating, na.rm = TRUE)-as.numeric(mu[1,1]))
 
 b_movie
 ```
@@ -175,4 +174,4 @@ In this Assignment, a new analysis pipeline was developed to input data hosted i
 
 Improvements to this work could include revisiting the synthetic data generation phase in Assignment 2A to generate quasi-random ratings values, rather than user-input hardcoded values. Additionally, since a mean value is used to generate estimated ratings, confidence intervals could be determined for each of the estimates provided.
 
-Future work to expand on this Assignment could include
+Future work to expand on this Assignment could include investigating model error via a statistical method like root-mean-square-error (RMSE). In addition, the model accuracy could be further probed by performing out-of-sample testing. In essence, 80% of the ratings could be fed into the model to generate the `mu`, `b_user`, and `b_movie` parameters, and then the 20% of the ratings that were withheld can be used for validation (e.g. testing whether the model accurately predicts values for that 20% of ratings). Lastly, this work could be expanded into a standalone app (Shiny) where a user can input their ratings for certain movies and see predictions for movies they haven't rated yet.
