@@ -1,5 +1,5 @@
 ---
-title: "Assignment3A-KCH-Approach"
+title: "Assignment3A-KCH-Codebase"
 author: "Kailot C. Harris"
 date: "2026/09/15"
 format: html
@@ -171,6 +171,6 @@ head(df_final)
 
 In this Assignment, a new analysis pipeline was developed to input data hosted in a local PostgreSQL database into R, tidy the data before analysis, and compute important parameters for the estimation process. Ratings values were estimated for each unique respondent and movie combination with a missing rating value. This emulates the real-world application of recommender systems to suggest new movies to a viewer. For instance, the system may recommend "One Battle After Another (2025)" to respondents with `respondent_id` values of 4 and 6, since their estimated rating is roughly 4.5.
 
-Improvements to this work could include revisiting the synthetic data generation phase in Assignment 2A to generate quasi-random ratings values, rather than user-input hardcoded values. Additionally, since a mean value is used to generate estimated ratings, confidence intervals could be determined for each of the estimates provided.
+Improvements to this work could include revisiting the synthetic data generation phase in Assignment 2A to generate quasi-random ratings values, rather than user-input hard-coded values. Additionally, since a mean value is used to generate estimated ratings, confidence intervals could be determined for each of the estimates provided.
 
 Future work to expand on this Assignment could include investigating model error via a statistical method like root-mean-square-error (RMSE). In addition, the model accuracy could be further probed by performing out-of-sample testing. In essence, 80% of the ratings could be fed into the model to generate the `mu`, `b_user`, and `b_movie` parameters, and then the 20% of the ratings that were withheld can be used for validation (e.g. testing whether the model accurately predicts values for that 20% of ratings). Lastly, this work could be expanded into a standalone app (Shiny) where a user can input their ratings for certain movies and see predictions for movies they haven't rated yet.

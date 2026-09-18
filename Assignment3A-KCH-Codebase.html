@@ -9,7 +9,7 @@
 <meta name="author" content="Kailot C. Harris">
 <meta name="dcterms.date" content="2026-09-15">
 
-<title>Assignment3A-KCH-Approach</title>
+<title>Assignment3A-KCH-Codebase</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -86,7 +86,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Assignment3A-KCH-Approach</h1>
+<h1 class="title">Assignment3A-KCH-Codebase</h1>
 </div>
 
 
@@ -221,23 +221,19 @@ $ rating        &lt;int&gt; 5, 4, 3, 5, 4, 3, 5, 4, 3, 4, 5, 2, 3, 1, 5, 2, 4, 3
 <p>A first step in generating predicted rating values for missing ratings was establishing the global mean for the dataset <code>mu</code>. <code>mu</code> was calculated via a series of piped summarize commands, with missing values removed before computing mean values. The global mean rating was determined to be approximately 3.76.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>mu <span class="ot">&lt;-</span> df <span class="sc">|&gt;</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(movie_id) <span class="sc">|&gt;</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span> (<span class="at">mean_rating_movie =</span> <span class="fu">mean</span>(rating, <span class="at">na.rm=</span><span class="cn">TRUE</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span> (<span class="at">global_mean =</span> <span class="fu">mean</span>(mean_rating_movie))</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>mu[<span class="dv">1</span>,<span class="dv">1</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">global_mean =</span> <span class="fu">mean</span>(rating, <span class="at">na.rm=</span><span class="cn">TRUE</span>))</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>mu</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 1 × 1
-  global_mean
-        &lt;dbl&gt;
-1        3.76</code></pre>
+<pre><code>  global_mean
+1    3.763158</code></pre>
 </div>
 </div>
 <p>From there, user biases were investigated. Here, a series of piped summarize, mutate, and select commands creates the final data frame containing just the <code>respondent_id</code> and the “user bias value” or <code>b_user</code>.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>b_user <span class="ot">&lt;-</span> df <span class="sc">|&gt;</span></span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(respondent_id) <span class="sc">|&gt;</span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span> (<span class="at">mean_rating_respondent =</span> <span class="fu">mean</span>(rating, <span class="at">na.RM=</span><span class="cn">TRUE</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span> (<span class="at">mean_rating_respondent =</span> <span class="fu">mean</span>(rating, <span class="at">na.rm=</span><span class="cn">TRUE</span>)) <span class="sc">|&gt;</span></span>
 <span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">b_user =</span> mean_rating_respondent <span class="sc">-</span> <span class="fu">as.numeric</span>(mu[<span class="dv">1</span>,<span class="dv">1</span>])) <span class="sc">|&gt;</span></span>
 <span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(respondent_id, b_user)</span>
 <span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a></span>
@@ -246,35 +242,35 @@ $ rating        &lt;int&gt; 5, 4, 3, 5, 4, 3, 5, 4, 3, 4, 5, 2, 3, 1, 5, 2, 4, 3
 <pre><code># A tibble: 7 × 2
   respondent_id  b_user
           &lt;int&gt;   &lt;dbl&gt;
-1             1  0.239 
-2             2 -0.511 
-3             3  0.239 
-4             4  0.239 
-5             5  0.0389
-6             6  0.239 
-7             7 -0.428 </code></pre>
+1             1  0.237 
+2             2 -0.513 
+3             3  0.237 
+4             4  0.237 
+5             5  0.0368
+6             6  0.237 
+7             7 -0.430 </code></pre>
 </div>
 </div>
 <p>A similar calculation is performed to find the movie bias, or in other words, the extent to which certain movies are preferred in this data set. The average rating for each movie is calculated, and then the global mean is subtracted from that quantity to yield a bias value for each movie, <code>b_movie</code>.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>b_movie <span class="ot">&lt;-</span> df <span class="sc">|&gt;</span></span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(movie_id) <span class="sc">|&gt;</span></span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">b_movie =</span> <span class="fu">mean</span>(rating, <span class="at">na.RM =</span> <span class="cn">TRUE</span>)<span class="sc">-</span><span class="fu">as.numeric</span>(mu[<span class="dv">1</span>,<span class="dv">1</span>]))</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">b_movie =</span> <span class="fu">mean</span>(rating, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)<span class="sc">-</span><span class="fu">as.numeric</span>(mu[<span class="dv">1</span>,<span class="dv">1</span>]))</span>
 <span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>b_movie</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 9 × 2
   movie_id b_movie
      &lt;int&gt;   &lt;dbl&gt;
-1        1  0.489 
-2        2  0.239 
-3        3  0.0389
-4        4  0.0389
-5        5 -0.761 
-6        6 -0.0944
-7        7  0.739 
-8        8 -0.428 
-9        9 -0.261 </code></pre>
+1        1  0.487 
+2        2  0.237 
+3        3  0.0368
+4        4  0.0368
+5        5 -0.763 
+6        6 -0.0965
+7        7  0.737 
+8        8 -0.430 
+9        9 -0.263 </code></pre>
 </div>
 </div>
 </section>
@@ -317,12 +313,12 @@ $ rating        &lt;int&gt; 5, 4, 3, 5, 4, 3, 5, 4, 3, 4, 5, 2, 3, 1, 5, 2, 4, 3
 <span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(df_final)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>  respondent_id movie_id                           title rating_est
-1             4        1 One Battle After Another (2025)   4.488889
-2             6        1 One Battle After Another (2025)   4.488889
-3             7        1 One Battle After Another (2025)   3.822222
-4             3        2           Licorice Pizza (2021)   4.238889
-5             5        2           Licorice Pizza (2021)   4.038889
-6             4        3           Phantom Thread (2017)   4.038889</code></pre>
+1             4        1 One Battle After Another (2025)   4.486842
+2             6        1 One Battle After Another (2025)   4.486842
+3             7        1 One Battle After Another (2025)   3.820175
+4             3        2           Licorice Pizza (2021)   4.236842
+5             5        2           Licorice Pizza (2021)   4.036842
+6             4        3           Phantom Thread (2017)   4.036842</code></pre>
 </div>
 </div>
 </section>
@@ -331,8 +327,8 @@ $ rating        &lt;int&gt; 5, 4, 3, 5, 4, 3, 5, 4, 3, 4, 5, 2, 3, 1, 5, 2, 4, 3
 <section id="findings-and-recommendations" class="level1">
 <h1>Findings and Recommendations</h1>
 <p>In this Assignment, a new analysis pipeline was developed to input data hosted in a local PostgreSQL database into R, tidy the data before analysis, and compute important parameters for the estimation process. Ratings values were estimated for each unique respondent and movie combination with a missing rating value. This emulates the real-world application of recommender systems to suggest new movies to a viewer. For instance, the system may recommend “One Battle After Another (2025)” to respondents with <code>respondent_id</code> values of 4 and 6, since their estimated rating is roughly 4.5.</p>
-<p>Improvements to this work could include revisiting the synthetic data generation phase in Assignment 2A to generate quasi-random ratings values, rather than user-input hardcoded values. Additionally, since a mean value is used to generate estimated ratings, confidence intervals could be determined for each of the estimates provided.</p>
-<p>Future work to expand on this Assignment could include</p>
+<p>Improvements to this work could include revisiting the synthetic data generation phase in Assignment 2A to generate quasi-random ratings values, rather than user-input hard-coded values. Additionally, since a mean value is used to generate estimated ratings, confidence intervals could be determined for each of the estimates provided.</p>
+<p>Future work to expand on this Assignment could include investigating model error via a statistical method like root-mean-square-error (RMSE). In addition, the model accuracy could be further probed by performing out-of-sample testing. In essence, 80% of the ratings could be fed into the model to generate the <code>mu</code>, <code>b_user</code>, and <code>b_movie</code> parameters, and then the 20% of the ratings that were withheld can be used for validation (e.g.&nbsp;testing whether the model accurately predicts values for that 20% of ratings). Lastly, this work could be expanded into a standalone app (Shiny) where a user can input their ratings for certain movies and see predictions for movies they haven’t rated yet.</p>
 </section>
 
 </main>
